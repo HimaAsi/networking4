@@ -1,0 +1,574 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Module - Network Topologies (Fixed SVG)</title>
+    <style>
+        /* ======================================================= */
+        /* CORE STYLES (Foundation Diploma Template Match)          */
+        /* ======================================================= */
+        :root { 
+            --bg-color: #0b0f19; --primary: #3b82f6; --accent: #f43f5e; 
+            --whatsapp: #25D366; --google: #4285F4; --fb-blue: #1877F2; 
+            --zoom-blue: #2D8CFF; --yt-red: #FF0000; --text-main: #f8fafc; 
+            --text-muted: #94a3b8; --panel-bg: rgba(15, 23, 42, 0.7); 
+            --gold: #f59e0b; --green: #10b981; --cyan: #06b6d4; --purple: #8b5cf6;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', system-ui, sans-serif; user-select: none; }
+        html { font-size: 16px; } 
+        @media (min-width: 1920px) { html { font-size: 20px; } } 
+        @media (min-width: 2560px) { html { font-size: 26px; } } 
+        @media (min-width: 3800px) { html { font-size: 36px; } }
+        
+        body { background-color: var(--bg-color); color: var(--text-main); overflow: hidden; width: 100vw; height: 100vh; background-image: radial-gradient(circle at center, #1e1b4b 0%, #0b0f19 100%); }
+        #presentation { position: relative; width: 100%; height: 100%; display: flex; justify-content: center; align-items: center; }
+        .slide { position: absolute; width: 92%; max-width: 1600px; height: 86%; opacity: 0; transform: scale(0.95) translateY(20px); transition: all 0.8s cubic-bezier(0.25, 1, 0.5, 1); display: flex; flex-direction: column; justify-content: center; pointer-events: none; overflow-y: auto; scrollbar-width: none; }
+        .slide::-webkit-scrollbar { display: none; } 
+        .slide.active { opacity: 1; transform: scale(1) translateY(0); pointer-events: auto; }
+        
+        h1 { font-size: 3.5rem; color: var(--primary); margin-bottom: 15px; text-transform: uppercase; letter-spacing: 2px; text-shadow: 0 0 20px rgba(59, 130, 246, 0.4); }
+        h2 { font-size: 2rem; margin-bottom: 25px; color: #cbd5e1; } 
+        p, li { font-size: 1.5rem; line-height: 1.8; color: var(--text-muted); margin-bottom: 15px; }
+        .module-tag { display:inline-block; border: 1px solid var(--cyan); padding: 4px 18px; border-radius: 20px; font-weight: bold; letter-spacing: 1px; margin-bottom: 10px; font-size: 0.9rem; align-self: flex-start; }
+
+        .landscape-box { position: relative; width: 100%; height: 50vh; min-height: 400px; max-height: 600px; background: var(--panel-bg); border-radius: 15px; border: 1px solid #334155; margin-top: 15px; box-shadow: inset 0 0 40px rgba(0,0,0,0.7); overflow: hidden; flex-shrink: 0; display: flex; align-items: center; justify-content: center; padding: 20px; }
+        .desc-box { margin-top: 20px; background: rgba(15, 23, 42, 0.8); border-left: 5px solid var(--primary); padding: 15px 25px; border-radius: 8px; height: auto; font-size: 1.3rem; line-height: 1.6; color: #f8fafc; opacity: 0; transition: opacity 0.5s; z-index: 50; position: relative; display: block; }
+        
+        /* TOPOLOGY ANIMATION BASE STYLES */
+        .topo-container { width: 100%; height: 100%; position: relative; display: flex; justify-content: center; align-items: center; }
+        
+        /* SVG Line Styles */
+        .topo-svg { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 1; pointer-events: none; }
+        .topo-svg line { stroke: #475569; stroke-width: 5; transition: all 0.5s; }
+        
+        /* Nodes */
+        .t-node { width: 60px; height: 60px; background: #1e293b; border: 2px solid var(--primary); border-radius: 10px; display: flex; flex-direction: column; justify-content: center; align-items: center; font-size: 2rem; position: absolute; transform: translate(-50%, -50%); z-index: 10; box-shadow: 0 5px 15px rgba(0,0,0,0.5); transition: all 0.5s; color: white;}
+        .t-node.hub { border-radius: 50%; border-color: var(--gold); }
+        .t-node::after { content: attr(data-label); position: absolute; bottom: -28px; font-size: 0.9rem; color: #cbd5e1; font-weight: bold; white-space: nowrap; }
+        
+        /* Packet & Indicators */
+        .t-packet { width: 25px; height: 15px; background: var(--whatsapp); border-radius: 5px; position: absolute; transform: translate(-50%, -50%); z-index: 20; opacity: 0; box-shadow: 0 0 15px var(--whatsapp); }
+        .t-break-x { position: absolute; color: var(--accent); font-size: 3.5rem; font-weight: bold; text-shadow: 0 0 15px var(--accent); z-index: 30; opacity: 0; transform: translate(-50%, -50%) scale(0); transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1); pointer-events: none;}
+        .t-break-x.show { opacity: 1; transform: translate(-50%, -50%) scale(1); animation: pulseAlert 1s infinite alternate;}
+        
+        /* Failure States */
+        .failed-node { border-color: var(--accent) !important; filter: grayscale(1) opacity(0.5); box-shadow: 0 0 15px rgba(244, 63, 94, 0.5); }
+        .topo-svg line.failed-line { stroke: rgba(244, 63, 94, 0.5); }
+        .failed-ring { border-color: rgba(244, 63, 94, 0.5) !important; }
+
+        @keyframes pulseAlert { 0% { transform: translate(-50%, -50%) scale(1); } 100% { transform: translate(-50%, -50%) scale(1.2); } }
+
+        /* --- 1. BUS TOPOLOGY --- */
+        #bus-n1 { left: 20%; top: 20%; }
+        #bus-n2 { left: 40%; top: 80%; }
+        #bus-n3 { left: 60%; top: 20%; }
+        #bus-n4 { left: 80%; top: 80%; }
+        
+        @keyframes busFlow {
+            0% { opacity: 0; left: 20%; top: 20%; }
+            10% { opacity: 1; left: 20%; top: 20%; }
+            30% { opacity: 1; left: 20%; top: 50%; }
+            70% { opacity: 1; left: 80%; top: 50%; }
+            90% { opacity: 1; left: 80%; top: 80%; }
+            100% { opacity: 0; left: 80%; top: 80%; }
+        }
+
+        /* --- 2. RING TOPOLOGY --- */
+        .ring-line-circle { position: absolute; border: 5px solid #475569; width: 300px; height: 300px; border-radius: 50%; left: 50%; top: 50%; transform: translate(-50%, -50%); z-index: 1; transition: all 0.5s;}
+        #ring-n1 { left: 50%; top: calc(50% - 150px); }
+        #ring-n2 { left: calc(50% + 150px); top: 50%; }
+        #ring-n3 { left: 50%; top: calc(50% + 150px); }
+        #ring-n4 { left: calc(50% - 150px); top: 50%; }
+
+        .ring-path-container { width: 300px; height: 300px; position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); z-index: 20; border-radius: 50%; animation: spin 4s linear infinite; opacity: 0;}
+        .ring-packet { width: 25px; height: 25px; background: var(--whatsapp); border-radius: 50%; position: absolute; top: -12.5px; left: 50%; transform: translateX(-50%); box-shadow: 0 0 15px var(--whatsapp); }
+        @keyframes spin { 100% { transform: translate(-50%, -50%) rotate(360deg); } }
+
+        /* --- 3. STAR TOPOLOGY --- */
+        #star-hub { left: 50%; top: 50%; width: 80px; height: 80px; font-size: 2.5rem;}
+        #star-n1 { left: 25%; top: 25%; }
+        #star-n2 { left: 75%; top: 25%; }
+        #star-n3 { left: 25%; top: 75%; }
+        #star-n4 { left: 75%; top: 75%; }
+        
+        @keyframes starFlow {
+            0% { opacity: 0; left: 25%; top: 25%; }
+            10% { opacity: 1; left: 25%; top: 25%; }
+            45% { opacity: 1; left: 50%; top: 50%; }
+            55% { opacity: 1; left: 50%; top: 50%; }
+            90% { opacity: 1; left: 75%; top: 75%; }
+            100% { opacity: 0; left: 75%; top: 75%; }
+        }
+
+        /* --- 4. MESH TOPOLOGY --- */
+        #mesh-n1 { left: 25%; top: 25%; }
+        #mesh-n2 { left: 75%; top: 25%; }
+        #mesh-n3 { left: 25%; top: 75%; }
+        #mesh-n4 { left: 75%; top: 75%; }
+        
+        @keyframes meshFlow1 {
+            0% { opacity: 0; left: 25%; top: 25%; }
+            10% { opacity: 1; left: 25%; top: 25%; }
+            90% { opacity: 1; left: 75%; top: 75%; }
+            100% { opacity: 0; left: 75%; top: 75%; }
+        }
+        @keyframes meshFlow2 {
+            0% { opacity: 0; left: 25%; top: 25%; }
+            10% { opacity: 1; left: 25%; top: 25%; }
+            45% { opacity: 1; left: 75%; top: 25%; }
+            55% { opacity: 1; left: 75%; top: 25%; }
+            90% { opacity: 1; left: 75%; top: 75%; }
+            100% { opacity: 0; left: 75%; top: 75%; }
+        }
+
+        /* --- 5. TREE TOPOLOGY --- */
+        #tree-root { left: 50%; top: 15%; width: 70px; height: 70px; font-size: 2.2rem;}
+        #tree-b1 { left: 30%; top: 45%; }
+        #tree-b2 { left: 70%; top: 45%; }
+        #tree-l1 { left: 20%; top: 80%; }
+        #tree-l2 { left: 40%; top: 80%; }
+        #tree-l3 { left: 60%; top: 80%; }
+        #tree-l4 { left: 80%; top: 80%; }
+
+        @keyframes treeFlow {
+            0% { opacity: 0; left: 50%; top: 15%; }
+            10% { opacity: 1; left: 50%; top: 15%; }
+            45% { opacity: 1; left: 30%; top: 45%; }
+            55% { opacity: 1; left: 30%; top: 45%; }
+            90% { opacity: 1; left: 20%; top: 80%; }
+            100% { opacity: 0; left: 20%; top: 80%; }
+        }
+        
+    </style>
+</head>
+<body>
+
+    <div id="presentation" onclick="nextSlide()">
+        
+        <!-- SLIDE 0: TITLE SLIDE -->
+        <section class="slide active" id="slide-0" style="align-items: center; text-align: center; justify-content: center;">
+            <div style="max-width: 1000px; width: 100%;">
+                <h2 style="color: var(--accent); font-size: 1.5rem; margin-bottom: 5px; text-transform: uppercase; letter-spacing: 2px;">Foundation Diploma in ICT</h2>
+                <h1 style="font-size: 3.5rem; margin-bottom: 5px; color: var(--primary); text-shadow: 0 0 20px rgba(59, 130, 246, 0.4);">ජාල ස්ථාන විද්‍යාව</h1>
+                <p style="font-size: 2rem; color: var(--text-main); font-weight: bold; margin-bottom: 25px;">Network Topologies (Physical Layout)</p>
+
+                <div id="module-list" style="background: rgba(15, 23, 42, 0.8); border: 1px solid #334155; border-radius: 15px; padding: 20px 25px; text-align: left; margin-bottom: 25px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); display: flex; flex-wrap: wrap; gap: 20px; justify-content: center;">
+                    <div style="font-size: 1.2rem; color: #e2e8f0; width: 100%; text-align: center; border-bottom: 1px solid #334155; padding-bottom: 10px; margin-bottom: 10px;"><b>ජාල සැකසුම් ආකෘති 5 ක්</b></div>
+                    <div style="font-size: 1.2rem; color: #e2e8f0;"><span style="color:var(--primary);">➖ Bus (බස්)</span></div>
+                    <div style="font-size: 1.2rem; color: #e2e8f0;"><span style="color:var(--gold);">⭕ Ring (මුදු)</span></div>
+                    <div style="font-size: 1.2rem; color: #e2e8f0;"><span style="color:var(--green);">⭐ Star (තරු)</span></div>
+                    <div style="font-size: 1.2rem; color: #e2e8f0;"><span style="color:var(--accent);">🕸️ Mesh (දැල්)</span></div>
+                    <div style="font-size: 1.2rem; color: #e2e8f0;"><span style="color:var(--cyan);">🌳 Tree (රුක්)</span></div>
+                </div>
+
+                <div id="profile-box" style="display: inline-flex; align-items: center; justify-content: center; gap: 20px; background: rgba(15, 23, 42, 0.9); padding: 15px 30px; border-radius: 15px; border-left: 5px solid var(--primary); text-align: left; max-width: 900px; box-shadow: 0 5px 25px rgba(0,0,0,0.4); z-index: 10;">
+                    <div style="width: 80px; height: 80px; border-radius: 12px; border: 2px solid var(--primary); box-shadow: 0 4px 15px rgba(59, 130, 246, 0.3); flex-shrink: 0; background-color: #1e293b; background-image: url('./image_8ca44b.png'); background-size: cover; background-position: center;"></div>
+                    <div>
+                        <p style="font-size: 0.9rem; color: var(--primary); margin-bottom: 3px; text-transform: uppercase; letter-spacing: 1px; font-weight: bold;">Lecturer</p>
+                        <h3 style="font-size: 1.6rem; color: #f8fafc; margin-bottom: 4px;">Himanka Dodangoda</h3>
+                        <p style="font-size: 1rem; color: #cbd5e1; margin-bottom: 3px;">MSc in AI (Reading) | MBA | BSc (Hons) in Software Eng. (UK)</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- SLIDE 1: BUS TOPOLOGY -->
+        <section class="slide" id="slide-1">
+            <div class="module-tag" style="background:rgba(59, 130, 246, 0.2); border-color: var(--primary); color: var(--primary);">TOPOLOGY 01</div>
+            <h1 style="color: var(--primary);">බස් ස්තරය (Bus Topology)</h1>
+            <h2>ප්‍රධාන කේබලයක් (Backbone) හරහා සියලුම උපාංග සම්බන්ධ වේ</h2>
+            
+            <div class="landscape-box" style="border-color: var(--primary);">
+                <div class="topo-container" id="tc-bus">
+                    <!-- SVG Lines for Bus -->
+                    <svg class="topo-svg" id="bus-svg">
+                        <line x1="10%" y1="50%" x2="90%" y2="50%" id="bus-backbone"></line>
+                        <line x1="20%" y1="20%" x2="20%" y2="50%"></line>
+                        <line x1="40%" y1="80%" x2="40%" y2="50%"></line>
+                        <line x1="60%" y1="20%" x2="60%" y2="50%"></line>
+                        <line x1="80%" y1="80%" x2="80%" y2="50%"></line>
+                    </svg>
+                    
+                    <!-- Nodes -->
+                    <div class="t-node" id="bus-n1" data-label="PC 1">💻</div>
+                    <div class="t-node" id="bus-n2" data-label="PC 2">💻</div>
+                    <div class="t-node" id="bus-n3" data-label="PC 3">💻</div>
+                    <div class="t-node" id="bus-n4" data-label="PC 4">💻</div>
+
+                    <!-- Packet -->
+                    <div class="t-packet" id="bus-packet"></div>
+                    
+                    <!-- Break Indicator -->
+                    <div class="t-break-x" id="bus-break" style="left: 50%; top: 50%;">❌</div>
+                </div>
+            </div>
+            <div class="desc-box" id="desc-1" style="border-left-color: var(--primary);">Click to animate Data Flow...</div>
+        </section>
+
+        <!-- SLIDE 2: RING TOPOLOGY -->
+        <section class="slide" id="slide-2">
+            <div class="module-tag" style="background:rgba(245, 158, 11, 0.2); border-color: var(--gold); color: var(--gold);">TOPOLOGY 02</div>
+            <h1 style="color: var(--gold);">මුදු ස්තරය (Ring Topology)</h1>
+            <h2>එක් දිශාවකට පමණක් රවුමකට දත්ත ගමන් කරයි</h2>
+            
+            <div class="landscape-box" style="border-color: var(--gold);">
+                <div class="topo-container" id="tc-ring">
+                    <!-- Ring Line -->
+                    <div class="ring-line-circle" id="ring-line-main"></div>
+                    
+                    <!-- Nodes -->
+                    <div class="t-node" id="ring-n1" data-label="PC 1">💻</div>
+                    <div class="t-node" id="ring-n2" data-label="PC 2">💻</div>
+                    <div class="t-node" id="ring-n3" data-label="PC 3">💻</div>
+                    <div class="t-node" id="ring-n4" data-label="PC 4">💻</div>
+
+                    <!-- Rotating Packet Container -->
+                    <div class="ring-path-container" id="ring-packet-wrap">
+                        <div class="ring-packet"></div>
+                    </div>
+
+                    <!-- Break Indicator -->
+                    <div class="t-break-x" id="ring-break" style="left: calc(50% + 150px); top: calc(50% + 150px);">❌</div>
+                </div>
+            </div>
+            <div class="desc-box" id="desc-2" style="border-left-color: var(--gold);">Click to animate Data Flow...</div>
+        </section>
+
+        <!-- SLIDE 3: STAR TOPOLOGY -->
+        <section class="slide" id="slide-3">
+            <div class="module-tag" style="background:rgba(16, 185, 129, 0.2); border-color: var(--green); color: var(--green);">TOPOLOGY 03</div>
+            <h1 style="color: var(--green);">තරු ස්තරය (Star Topology)</h1>
+            <h2>මධ්‍යම උපාංගයක් (Switch/Hub) හරහා සියලු දත්ත ගමන් කරයි</h2>
+            
+            <div class="landscape-box" style="border-color: var(--green);">
+                <div class="topo-container" id="tc-star">
+                    <!-- SVG Lines for Star -->
+                    <svg class="topo-svg" id="star-svg">
+                        <line x1="50%" y1="50%" x2="25%" y2="25%"></line>
+                        <line x1="50%" y1="50%" x2="75%" y2="25%"></line>
+                        <line x1="50%" y1="50%" x2="25%" y2="75%"></line>
+                        <line x1="50%" y1="50%" x2="75%" y2="75%"></line>
+                    </svg>
+                    
+                    <!-- Center Hub -->
+                    <div class="t-node hub" id="star-hub" data-label="Switch">🖧</div>
+
+                    <!-- Nodes -->
+                    <div class="t-node" id="star-n1" data-label="PC 1">💻</div>
+                    <div class="t-node" id="star-n2" data-label="PC 2">💻</div>
+                    <div class="t-node" id="star-n3" data-label="PC 3">💻</div>
+                    <div class="t-node" id="star-n4" data-label="PC 4">💻</div>
+
+                    <!-- Packet -->
+                    <div class="t-packet" id="star-packet"></div>
+
+                    <!-- Break Indicator -->
+                    <div class="t-break-x" id="star-break" style="left: 50%; top: 50%;">❌</div>
+                </div>
+            </div>
+            <div class="desc-box" id="desc-3" style="border-left-color: var(--green);">Click to animate Data Flow...</div>
+        </section>
+
+        <!-- SLIDE 4: MESH TOPOLOGY -->
+        <section class="slide" id="slide-4">
+            <div class="module-tag" style="background:rgba(244, 63, 94, 0.2); border-color: var(--accent); color: var(--accent);">TOPOLOGY 04</div>
+            <h1 style="color: var(--accent);">දැල් ස්තරය (Mesh Topology)</h1>
+            <h2>සෑම උපාංගයක්ම අනෙක් සියලුම උපාංග සමග සම්බන්ධ වේ</h2>
+            
+            <div class="landscape-box" style="border-color: var(--accent);">
+                <div class="topo-container" id="tc-mesh">
+                    <!-- SVG Lines for Mesh -->
+                    <svg class="topo-svg" id="mesh-svg">
+                        <line x1="25%" y1="25%" x2="75%" y2="25%"></line>
+                        <line x1="25%" y1="75%" x2="75%" y2="75%"></line>
+                        <line x1="25%" y1="25%" x2="25%" y2="75%"></line>
+                        <line x1="75%" y1="25%" x2="75%" y2="75%"></line>
+                        <line x1="25%" y1="25%" x2="75%" y2="75%" id="mesh-diag-1"></line>
+                        <line x1="25%" y1="75%" x2="75%" y2="25%"></line>
+                    </svg>
+                    
+                    <!-- Nodes -->
+                    <div class="t-node" id="mesh-n1" data-label="PC 1">💻</div>
+                    <div class="t-node" id="mesh-n2" data-label="PC 2">💻</div>
+                    <div class="t-node" id="mesh-n3" data-label="PC 3">💻</div>
+                    <div class="t-node" id="mesh-n4" data-label="PC 4">💻</div>
+
+                    <!-- Packet -->
+                    <div class="t-packet" id="mesh-packet"></div>
+
+                    <!-- Break Indicator -->
+                    <div class="t-break-x" id="mesh-break" style="left: 50%; top: 50%;">❌</div>
+                </div>
+            </div>
+            <div class="desc-box" id="desc-4" style="border-left-color: var(--accent);">Click to animate Data Flow...</div>
+        </section>
+
+        <!-- SLIDE 5: TREE TOPOLOGY -->
+        <section class="slide" id="slide-5">
+            <div class="module-tag" style="background:rgba(6, 182, 212, 0.2); border-color: var(--cyan); color: var(--cyan);">TOPOLOGY 05</div>
+            <h1 style="color: var(--cyan);">රුක් ස්තරය (Tree Topology)</h1>
+            <h2>Star සහ Bus ස්තරයන්හි එකතුවෙන් සෑදුණු ධූරාවලියකි (Hierarchy)</h2>
+            
+            <div class="landscape-box" style="border-color: var(--cyan);">
+                <div class="topo-container" id="tc-tree">
+                    <!-- SVG Lines for Tree -->
+                    <svg class="topo-svg" id="tree-svg">
+                        <line x1="50%" y1="15%" x2="30%" y2="45%" id="tree-branch-line"></line>
+                        <line x1="50%" y1="15%" x2="70%" y2="45%"></line>
+                        <line x1="30%" y1="45%" x2="20%" y2="80%" id="tree-l1-line"></line>
+                        <line x1="30%" y1="45%" x2="40%" y2="80%" id="tree-l2-line"></line>
+                        <line x1="70%" y1="45%" x2="60%" y2="80%"></line>
+                        <line x1="70%" y1="45%" x2="80%" y2="80%"></line>
+                    </svg>
+
+                    <!-- Hubs -->
+                    <div class="t-node hub" id="tree-root" data-label="Main Switch" style="background: #0f172a;">🖧</div>
+                    <div class="t-node hub" id="tree-b1" data-label="Sub Switch 1" style="width: 50px; height: 50px; font-size: 1.2rem; background: #0f172a;">🖧</div>
+                    <div class="t-node hub" id="tree-b2" data-label="Sub Switch 2" style="width: 50px; height: 50px; font-size: 1.2rem; background: #0f172a;">🖧</div>
+
+                    <!-- Nodes -->
+                    <div class="t-node" id="tree-l1" data-label="PC 1" style="width: 40px; height: 40px; font-size: 1.2rem;">💻</div>
+                    <div class="t-node" id="tree-l2" data-label="PC 2" style="width: 40px; height: 40px; font-size: 1.2rem;">💻</div>
+                    <div class="t-node" id="tree-l3" data-label="PC 3" style="width: 40px; height: 40px; font-size: 1.2rem;">💻</div>
+                    <div class="t-node" id="tree-l4" data-label="PC 4" style="width: 40px; height: 40px; font-size: 1.2rem;">💻</div>
+
+                    <!-- Packet -->
+                    <div class="t-packet" id="tree-packet"></div>
+
+                    <!-- Break Indicator -->
+                    <div class="t-break-x" id="tree-break" style="left: 30%; top: 45%;">❌</div>
+                </div>
+            </div>
+            <div class="desc-box" id="desc-5" style="border-left-color: var(--cyan);">Click to animate Data Flow...</div>
+        </section>
+
+    </div>
+
+    <!-- JAVASCRIPT ANIMATION LOGIC -->
+    <script>
+        const slides = document.querySelectorAll('.slide');
+        let currentSlide = 0;
+        let isAnimating = false;
+
+        // Step variables
+        let stepBus = -1;
+        let stepRing = -1;
+        let stepStar = -1;
+        let stepMesh = -1;
+        let stepTree = -1;
+
+        // Slide Data & Text
+        const textBus = [
+            "<b>දත්ත ගමන් කිරීම:</b> එක් පරිගණකයකින් යවන දත්ත, ප්‍රධාන කේබලය (Backbone) දිගේ අදාළ ග්‍රාහකයා වෙත ගමන් කරයි.",
+            "<b>බිඳ වැටීම (Breakdown):</b> ප්‍රධාන කේබලය මැදින් කැඩුණු විට, මුළු ජාලයේම සන්නිවේදනය සම්පූර්ණයෙන්ම ඇනහිටී."
+        ];
+        
+        const textRing = [
+            "<b>දත්ත ගමන් කිරීම:</b> දත්ත පැකට්ටුව එක දිශාවකට පමණක් (රවුමට) එක පරිගණකයකින් අනෙකට සම්ප්‍රේෂණය වේ.",
+            "<b>බිඳ වැටීම (Breakdown):</b> එක් කේබලයක් හෝ පරිගණකයක් අක්‍රිය වූ විට, දත්ත රවුමට ගමන් කළ නොහැකි නිසා මුළු ජාලයම බිඳ වැටේ."
+        ];
+
+        const textStar = [
+            "<b>දත්ත ගමන් කිරීම:</b> සෑම දත්තයක්ම අනිවාර්යයෙන්ම මධ්‍යම Switch එක හෝ Hub එක හරහා ගමන් කළ යුතුය.",
+            "<b>බිඳ වැටීම (Breakdown):</b> එක් පරිගණකයක් කැඩුණත් ජාලයට හානියක් නැත. නමුත් මධ්‍යම Switch එක බිඳ වැටුණොත් මුළු ජාලයම අක්‍රිය වේ."
+        ];
+
+        const textMesh = [
+            "<b>දත්ත ගමන් කිරීම:</b> සෑම උපාංගයක්ම සෘජුවම අනිත් උපාංග සමඟ කේබල් මගින් සම්බන්ධ වී ඇත (Direct connection).",
+            "<b>බිඳ වැටීම (Breakdown):</b> එක් මාර්ගයක් කැඩුණත් ජාලය බිඳ වැටෙන්නේ නැත. දත්ත ගමන් කිරීමට වෙනත් විකල්ප මාර්ගයක් (Alternate path) ස්වයංක්‍රීයව තෝරාගනී."
+        ];
+
+        const textTree = [
+            "<b>දත්ත ගමන් කිරීම:</b> ප්‍රධාන Switch එකේ සිට උප ශාඛා වල ඇති Switch හරහා අදාළ පරිගණක වලට ධූරාවලි (Hierarchical) ආකාරයට දත්ත ගමන් කරයි.",
+            "<b>බිඳ වැටීම (Breakdown):</b> උප Switch එකක් අක්‍රිය වූ විට, ඊට යටතේ ඇති පරිගණක වල සම්බන්ධතාවය පමණක් බිඳ වැටේ. අනෙක් ශාඛා වලට හානියක් නොවේ."
+        ];
+
+        function resetAll() {
+            // Bus Reset
+            stepBus = -1;
+            document.getElementById('bus-packet').style.animation = 'none';
+            document.getElementById('bus-break').classList.remove('show');
+            document.getElementById('bus-backbone').classList.remove('failed-line');
+            document.querySelectorAll('#tc-bus .t-node').forEach(n => n.classList.remove('failed-node'));
+            if(document.getElementById('desc-1')) document.getElementById('desc-1').innerHTML = "Click to animate Data Flow...";
+
+            // Ring Reset
+            stepRing = -1;
+            document.getElementById('ring-packet-wrap').style.opacity = '0';
+            document.getElementById('ring-break').classList.remove('show');
+            document.getElementById('ring-line-main').classList.remove('failed-ring');
+            document.querySelectorAll('#tc-ring .t-node').forEach(n => n.classList.remove('failed-node'));
+            if(document.getElementById('desc-2')) document.getElementById('desc-2').innerHTML = "Click to animate Data Flow...";
+
+            // Star Reset
+            stepStar = -1;
+            document.getElementById('star-packet').style.animation = 'none';
+            document.getElementById('star-break').classList.remove('show');
+            document.getElementById('star-hub').classList.remove('failed-node');
+            document.querySelectorAll('#tc-star .t-node').forEach(n => n.classList.remove('failed-node'));
+            document.querySelectorAll('#star-svg line').forEach(n => n.classList.remove('failed-line'));
+            if(document.getElementById('desc-3')) document.getElementById('desc-3').innerHTML = "Click to animate Data Flow...";
+
+            // Mesh Reset
+            stepMesh = -1;
+            document.getElementById('mesh-packet').style.animation = 'none';
+            document.getElementById('mesh-break').classList.remove('show');
+            document.getElementById('mesh-diag-1').classList.remove('failed-line');
+            if(document.getElementById('desc-4')) document.getElementById('desc-4').innerHTML = "Click to animate Data Flow...";
+
+            // Tree Reset
+            stepTree = -1;
+            document.getElementById('tree-packet').style.animation = 'none';
+            document.getElementById('tree-break').classList.remove('show');
+            document.getElementById('tree-b1').classList.remove('failed-node');
+            document.getElementById('tree-l1').classList.remove('failed-node');
+            document.getElementById('tree-l2').classList.remove('failed-node');
+            document.getElementById('tree-branch-line').classList.remove('failed-line');
+            document.getElementById('tree-l1-line').classList.remove('failed-line');
+            document.getElementById('tree-l2-line').classList.remove('failed-line');
+            if(document.getElementById('desc-5')) document.getElementById('desc-5').innerHTML = "Click to animate Data Flow...";
+        }
+
+        function updateSlides() {
+            slides.forEach((slide, index) => { 
+                if (index === currentSlide) slide.classList.add('active'); 
+                else slide.classList.remove('active'); 
+            });
+            resetAll();
+        }
+
+        async function updateDesc(descId, text) {
+            const desc = document.getElementById(descId);
+            desc.style.opacity = 0;
+            return new Promise(resolve => {
+                setTimeout(() => { 
+                    desc.innerHTML = text; 
+                    desc.style.opacity = 1; 
+                    resolve();
+                }, 300);
+            });
+        }
+
+        async function runBusStep() {
+            if (isAnimating) return; isAnimating = true; stepBus++;
+            if (stepBus === 0) {
+                document.getElementById('bus-packet').style.animation = 'busFlow 3s ease-in-out forwards';
+                await updateDesc('desc-1', textBus[0]);
+                setTimeout(() => { isAnimating = false; }, 3000); 
+            } else if (stepBus === 1) {
+                document.getElementById('bus-packet').style.animation = 'none';
+                document.getElementById('bus-break').classList.add('show');
+                document.getElementById('bus-backbone').classList.add('failed-line');
+                document.querySelectorAll('#tc-bus .t-node').forEach(n => n.classList.add('failed-node'));
+                await updateDesc('desc-1', textBus[1]);
+                isAnimating = false;
+            }
+        }
+
+        async function runRingStep() {
+            if (isAnimating) return; isAnimating = true; stepRing++;
+            if (stepRing === 0) {
+                document.getElementById('ring-packet-wrap').style.opacity = '1';
+                document.getElementById('ring-packet-wrap').style.animationPlayState = 'running';
+                await updateDesc('desc-2', textRing[0]);
+                isAnimating = false;
+            } else if (stepRing === 1) {
+                document.getElementById('ring-packet-wrap').style.animationPlayState = 'paused';
+                document.getElementById('ring-packet-wrap').style.opacity = '0';
+                document.getElementById('ring-break').classList.add('show');
+                document.getElementById('ring-line-main').classList.add('failed-ring');
+                document.querySelectorAll('#tc-ring .t-node').forEach(n => n.classList.add('failed-node'));
+                await updateDesc('desc-2', textRing[1]);
+                isAnimating = false;
+            }
+        }
+
+        async function runStarStep() {
+            if (isAnimating) return; isAnimating = true; stepStar++;
+            if (stepStar === 0) {
+                document.getElementById('star-packet').style.animation = 'starFlow 2.5s ease-in-out forwards';
+                await updateDesc('desc-3', textStar[0]);
+                setTimeout(() => { isAnimating = false; }, 2500);
+            } else if (stepStar === 1) {
+                document.getElementById('star-packet').style.animation = 'none';
+                document.getElementById('star-break').classList.add('show');
+                document.getElementById('star-hub').classList.add('failed-node');
+                document.querySelectorAll('#tc-star .t-node').forEach(n => n.classList.add('failed-node'));
+                document.querySelectorAll('#star-svg line').forEach(n => n.classList.add('failed-line'));
+                await updateDesc('desc-3', textStar[1]);
+                isAnimating = false;
+            }
+        }
+
+        async function runMeshStep() {
+            if (isAnimating) return; isAnimating = true; stepMesh++;
+            if (stepMesh === 0) {
+                document.getElementById('mesh-packet').style.animation = 'meshFlow1 2s ease-in-out forwards';
+                await updateDesc('desc-4', textMesh[0]);
+                setTimeout(() => { isAnimating = false; }, 2000);
+            } else if (stepMesh === 1) {
+                document.getElementById('mesh-packet').style.animation = 'none';
+                document.getElementById('mesh-break').classList.add('show');
+                document.getElementById('mesh-diag-1').classList.add('failed-line');
+                
+                // Backup path animation
+                setTimeout(() => {
+                    document.getElementById('mesh-packet').style.animation = 'meshFlow2 3s ease-in-out forwards';
+                }, 500);
+                
+                await updateDesc('desc-4', textMesh[1]);
+                setTimeout(() => { isAnimating = false; }, 3500);
+            }
+        }
+
+        async function runTreeStep() {
+            if (isAnimating) return; isAnimating = true; stepTree++;
+            if (stepTree === 0) {
+                document.getElementById('tree-packet').style.animation = 'treeFlow 2.5s ease-in-out forwards';
+                await updateDesc('desc-5', textTree[0]);
+                setTimeout(() => { isAnimating = false; }, 2500);
+            } else if (stepTree === 1) {
+                document.getElementById('tree-packet').style.animation = 'none';
+                document.getElementById('tree-break').classList.add('show');
+                document.getElementById('tree-b1').classList.add('failed-node');
+                document.getElementById('tree-l1').classList.add('failed-node');
+                document.getElementById('tree-l2').classList.add('failed-node');
+                document.getElementById('tree-branch-line').classList.add('failed-line');
+                document.getElementById('tree-l1-line').classList.add('failed-line');
+                document.getElementById('tree-l2-line').classList.add('failed-line');
+                await updateDesc('desc-5', textTree[1]);
+                isAnimating = false;
+            }
+        }
+
+        function nextSlide() {
+            if (isAnimating) return;
+
+            if (currentSlide === 1 && stepBus < 1) { runBusStep(); return; }
+            if (currentSlide === 2 && stepRing < 1) { runRingStep(); return; }
+            if (currentSlide === 3 && stepStar < 1) { runStarStep(); return; }
+            if (currentSlide === 4 && stepMesh < 1) { runMeshStep(); return; }
+            if (currentSlide === 5 && stepTree < 1) { runTreeStep(); return; }
+
+            if (currentSlide < slides.length - 1) { 
+                currentSlide++; 
+                updateSlides(); 
+            }
+        }
+
+        function prevSlide() { 
+            if (isAnimating) return;
+            if (currentSlide > 0) { currentSlide--; updateSlides(); } 
+        }
+
+        document.addEventListener('keydown', (e) => { 
+            if (e.key === 'ArrowRight' || e.key === ' ') nextSlide(); 
+            else if (e.key === 'ArrowLeft') prevSlide(); 
+        });
+
+        // Initialize
+        updateSlides();
+    </script>
+</body>
+</html>
